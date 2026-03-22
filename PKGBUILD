@@ -1,4 +1,4 @@
-pkgname=calamares-next
+pkgname=calamares
 _pkgname=calamares
 # change number in prepare as well
 pkgver=3.3.14.r39.g274996f  # placeholder; will be auto-generated
@@ -52,7 +52,7 @@ backup=('usr/share/calamares/modules/bootloader.conf'
         'usr/share/calamares/modules/unpackfs.conf')
 
 source=("calamares::git+https://codeberg.org/erikdubois/calamares"
-        "cal-kiro.desktop"
+        "cal_limalinux.desktop"
         "calamares_polkit"
 	"calamares-wrapper"
 	"suppress-qtinfo.patch")
@@ -115,12 +115,12 @@ package() {
 	cd "$srcdir/$_pkgname/build"
 	DESTDIR="$pkgdir" cmake --install .
 
-	install -Dm644 "$srcdir/cal-kiro.desktop" "$pkgdir/usr/share/applications/cal-kiro.desktop"
-	install -Dm755 "$srcdir/cal-kiro.desktop" "$pkgdir/home/liveuser/Desktop/cal-kiro.desktop"
-	chmod +x "$pkgdir/home/liveuser/Desktop/cal-kiro.desktop"
+	install -Dm644 "$srcdir/cal_limalinux.desktop" "$pkgdir/usr/share/applications/cal_limalinux.desktop"
+	install -Dm755 "$srcdir/cal_limalinux.desktop" "$pkgdir/home/liveuser/Desktop/cal_limalinux.desktop"
+	chmod +x "$pkgdir/home/liveuser/Desktop/cal_limalinux.desktop"
 
-	install -Dm644 "$srcdir/calamares-wrapper" "$pkgdir/usr/local/bin/calamares-wrapper"
-	chmod +x "$pkgdir/usr/local/bin/calamares-wrapper"
+	install -Dm644 "$srcdir/calamares_wrapper" "$pkgdir/usr/local/bin/calamares_wrapper"
+	chmod +x "$pkgdir/usr/local/bin/calamares_wrapper"
 	install -Dm755 "$srcdir/calamares_polkit" "$pkgdir/usr/bin/calamares_polkit"
 	rm "$pkgdir/usr/share/applications/calamares.desktop"
 }

@@ -1,13 +1,7 @@
 #!/bin/bash
 set -eo pipefail
 ##################################################################################################################
-# Author    : Erik Dubois
-# Website   : https://www.erikdubois.be
-# Youtube   : https://youtube.com/erikdubois
-# Github    : https://github.com/erikdubois
-# Github    : https://github.com/kirodubes
-# Github    : https://github.com/buildra
-# SF        : https://sourceforge.net/projects/kiro/files/
+
 ##################################################################################################################
 #
 #   DO NOT JUST RUN THIS. EXAMINE AND JUDGE. RUN AT YOUR OWN RISK.
@@ -33,9 +27,8 @@ workdir=$(pwd)
 
 # Define array of target directories
 dirs=(
-    "kiro-calamares-config"
-    "kiro-calamares-config-next"
-)
+    "limalinux_calamares_config"
+    )
 
 # Loop through each directory
 for dir in "${dirs[@]}"; do
