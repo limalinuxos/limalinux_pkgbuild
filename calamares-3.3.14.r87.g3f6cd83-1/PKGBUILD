@@ -55,7 +55,7 @@ backup=('usr/share/calamares/modules/bootloader.conf'
 source=("calamares::git+https://codeberg.org/erikdubois/calamares"
         "cal_limalinux_debugging.desktop"
         "calamares_polkit"
-	"calamares-wrapper")
+	"calamares_wrapper")
 sha256sums=('SKIP'
             '47cb1e71644cc836df3a0f36be77d0398fc34df4e21d7e7472b623fb30ace753'
             '966c5f0834039dc6a7529e75f70417ba2510b1e643ffb49fd25855ce9dc244b4'
@@ -118,8 +118,8 @@ package() {
 	install -Dm755 "$srcdir/cal_limalinux_debugging.desktop" "$pkgdir/home/liveuser/Desktop/cal_limalinux_debugging.desktop"
 	chmod +x "$pkgdir/home/liveuser/Desktop/cal_limalinux_debugging.desktop"
 
-	install -Dm644 "$srcdir/calamares-wrapper" "$pkgdir/usr/local/bin/calamares-wrapper"
-	chmod +x "$pkgdir/usr/local/bin/calamares-wrapper"
+	install -Dm644 "$srcdir/calamares_wrapper" "$pkgdir/usr/local/bin/calamares_wrapper"
+	chmod +x "$pkgdir/usr/local/bin/calamares_wrapper"
 	install -Dm755 "$srcdir/calamares_polkit" "$pkgdir/usr/bin/calamares_polkit"
 	rm "$pkgdir/usr/share/applications/calamares.desktop"
 }

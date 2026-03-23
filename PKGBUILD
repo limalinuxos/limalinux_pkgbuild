@@ -54,7 +54,7 @@ backup=('usr/share/calamares/modules/bootloader.conf'
 source=("calamares::git+https://codeberg.org/erikdubois/calamares"
         "cal_limalinux.desktop"
         "calamares_polkit"
-	"calamares-wrapper"
+	"calamares_wrapper"
 	"suppress-qtinfo.patch")
 sha256sums=('SKIP'
             '31a07d76d5c8ffee0e88bf41119c875fafb2e0bcefdae945e748e3f9e6803d6d'
