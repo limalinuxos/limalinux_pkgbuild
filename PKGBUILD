@@ -1,12 +1,12 @@
 pkgname=calamares
 _pkgname=calamares
-# change number in prepare as well
-pkgver=3.3.14.r39.g274996f  # placeholder; will be auto-generated
-pkgrel=1
-pkgdesc='Distribution-independent installer framework - latest git version'
-arch=('i686' 'x86_64')
-url="https://codeberg.org/erikdubois/calamares"
+pkgver=3.4.2.r0.g841b478 
+pkgrel=5
+pkgdesc='Distribution-independent installer framework'
+arch=('x86_64')
+url="https://codeberg.org/limalinuxos/calamares"
 license=('LGPL')
+conflicts=('calamares-next' 'calamares-git')
 provides=('calamares')
 depends=(
 	'boost-libs'
@@ -51,7 +51,7 @@ backup=('usr/share/calamares/modules/bootloader.conf'
         'usr/share/calamares/modules/initcpio.conf'
         'usr/share/calamares/modules/unpackfs.conf')
 
-source=("calamares::git+https://codeberg.org/erikdubois/calamares"
+source=("calamares::git+https://codeberg.org/limalinuxos/calamares"
         "cal_limalinux.desktop"
         "calamares_polkit"
 	"calamares_wrapper"
@@ -63,9 +63,11 @@ sha256sums=('SKIP'
 
 prepare() {
 	cp -rv ../modules/* "$srcdir/$_pkgname/src/modules/"
-
-	sed -i -e 's/"Install configuration files" OFF/"Install configuration files" ON/' "$srcdir/$_pkgname/CMakeLists.txt"
-	sed -i -e "s/desired_size = 512 \* 1024 \* 1024  \# 512MiB/desired_size = 512 \* 1024 \* 1024 \* 16  \# 8589MiB/" "$srcdir/$_pkgname/src/modules/fstab/main.py"
+   
+      
+    sed -i  's/"Install configuration files" OFF/"Install configuration files" ON/' CMakeLists.txt
+    
+    sed -i -e "s/desired_size = 512 \* 1024 \* 1024  \# 512MiB/desired_size = 512 \* 1024 \* 1024 \* 2  # 1024MiB/" "$srcdir/$_pkgname/src/modules/fstab/main.py"
 	patch -p1 -i "$srcdir/suppress-qtinfo.patch"
 }
 
@@ -87,9 +89,7 @@ build() {
 		-DWITH_APPSTREAM=OFF \
 		-DWITH_PYBIND11=OFF \
 		-DWITH_QT6=ON \
-		-DSKIP_MODULES="dracut \
-			dracutlukscfg \
-			dummycpp \
+		-DSKIP_MODULES="dummycpp \
 			dummyprocess \
 			dummypython \
 			dummypythonqt \
@@ -107,6 +107,7 @@ build() {
 			tracking \
 			usersq \
 			welcomeq"
+			
 
 	cmake --build build
 }
@@ -115,12 +116,16 @@ package() {
 	cd "$srcdir/$_pkgname/build"
 	DESTDIR="$pkgdir" cmake --install .
 
+	
 	install -Dm644 "$srcdir/cal_limalinux.desktop" "$pkgdir/usr/share/applications/cal_limalinux.desktop"
-	install -Dm755 "$srcdir/cal_limalinux.desktop" "$pkgdir/home/liveuser/Desktop/cal_limalinux.desktop"
-	chmod +x "$pkgdir/home/liveuser/Desktop/cal_limalinux.desktop"
 
-	install -Dm644 "$srcdir/calamares_wrapper" "$pkgdir/usr/local/bin/calamares_wrapper"
-	chmod +x "$pkgdir/usr/local/bin/calamares_wrapper"
+	install -d "$pkgdir/etc/skel/Desktop"
+	
+	install -m755 "$srcdir/cal_limalinux.desktop" "$pkgdir/etc/skel/Desktop/cal_limalinux.desktop"
+
+	install -Dm755 "$srcdir/calamares_wrapper" "$pkgdir/usr/bin/calamares_wrapper"
 	install -Dm755 "$srcdir/calamares_polkit" "$pkgdir/usr/bin/calamares_polkit"
-	rm "$pkgdir/usr/share/applications/calamares.desktop"
+
+	rm -f "$pkgdir/usr/share/applications/calamares.desktop"
+	rm -f "$pkgdir/etc/calamares/modules/initcpio.conf"
 }
