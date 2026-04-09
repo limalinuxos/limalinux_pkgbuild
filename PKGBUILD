@@ -1,12 +1,13 @@
-pkgname=calamares-next
+pkgname=calamares
 _pkgname=calamares
 # change number in prepare as well
-pkgver=3.3.14.r39.g274996f  # placeholder; will be auto-generated
+pkgver=3.3.14.r90.g53c70f8  # placeholder; will be auto-generated
 pkgrel=1
 pkgdesc='Distribution-independent installer framework - latest git version'
 arch=('i686' 'x86_64')
 url="https://codeberg.org/erikdubois/calamares"
 license=('LGPL')
+conflicts=('calamares-next' 'calamares-git')
 provides=('calamares')
 depends=(
 	'boost-libs'
@@ -52,10 +53,9 @@ backup=('usr/share/calamares/modules/bootloader.conf'
         'usr/share/calamares/modules/unpackfs.conf')
 
 source=("calamares::git+https://codeberg.org/erikdubois/calamares"
-        "cal-kiro.desktop"
+        "cal_limalinux.desktop"
         "calamares_polkit"
-	"calamares-wrapper"
-	"suppress-qtinfo.patch")
+	"calamares_wrapper")
 sha256sums=('SKIP'
             '31a07d76d5c8ffee0e88bf41119c875fafb2e0bcefdae945e748e3f9e6803d6d'
             '966c5f0834039dc6a7529e75f70417ba2510b1e643ffb49fd25855ce9dc244b4'
@@ -66,7 +66,6 @@ prepare() {
 
 	sed -i -e 's/"Install configuration files" OFF/"Install configuration files" ON/' "$srcdir/$_pkgname/CMakeLists.txt"
 	sed -i -e "s/desired_size = 512 \* 1024 \* 1024  \# 512MiB/desired_size = 512 \* 1024 \* 1024 \* 16  \# 8589MiB/" "$srcdir/$_pkgname/src/modules/fstab/main.py"
-	patch -p1 -i "$srcdir/suppress-qtinfo.patch"
 }
 
 pkgver() {
@@ -115,12 +114,12 @@ package() {
 	cd "$srcdir/$_pkgname/build"
 	DESTDIR="$pkgdir" cmake --install .
 
-	install -Dm644 "$srcdir/cal-kiro.desktop" "$pkgdir/usr/share/applications/cal-kiro.desktop"
-	install -Dm755 "$srcdir/cal-kiro.desktop" "$pkgdir/home/liveuser/Desktop/cal-kiro.desktop"
-	chmod +x "$pkgdir/home/liveuser/Desktop/cal-kiro.desktop"
+	install -Dm644 "$srcdir/cal_limalinux.desktop" "$pkgdir/usr/share/applications/cal_limalinux.desktop"
+	install -Dm755 "$srcdir/cal_limalinux.desktop" "$pkgdir/home/liveuser/Desktop/cal_limalinux.desktop"
+	chmod +x "$pkgdir/home/liveuser/Desktop/cal_limalinux.desktop"
 
-	install -Dm644 "$srcdir/calamares-wrapper" "$pkgdir/usr/local/bin/calamares-wrapper"
-	chmod +x "$pkgdir/usr/local/bin/calamares-wrapper"
+	install -Dm644 "$srcdir/calamares_wrapper" "$pkgdir/usr/local/bin/calamares_wrapper"
+	chmod +x "$pkgdir/usr/local/bin/calamares_wrapper"
 	install -Dm755 "$srcdir/calamares_polkit" "$pkgdir/usr/bin/calamares_polkit"
 	rm "$pkgdir/usr/share/applications/calamares.desktop"
 }
