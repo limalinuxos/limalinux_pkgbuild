@@ -1,4 +1,4 @@
-# Limalinux pkgbuild
+# Limalinux calamares config
 
 ![Limalinux Logo](limalinux.png)
 
@@ -13,10 +13,4 @@
 - Modular structure for easy extension
 - Lightweight and minimal by default
 
-## 📦 Requirements
-
-- Arch Linux or Arch-based system (for building)
-- `archiso` package
-- Basic familiarity with Bash scripting and package management
-- Knowledge how to build ISOs - https://www.arcolinuxiso.com/a-comprehensive-guide-to-iso-building/
 

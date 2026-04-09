@@ -29,7 +29,7 @@ echo "Updated PKGBUILD: pkgver=${NEW_VER}, pkgrel=${NEW_REL}"
 
 # CONFIGURATION
 CHROOT="$HOME/Documents/chroot-archlinux"
-DEST_DIR="/home/daniel/limalinuxos/limalinux_repo/x86_64/"
+DEST_DIR="/home/erik/KIRO/kiro_repo/x86_64/"
 CHOICE=2  # Default to makepkg
 MAKEPKG_LIST=()  # Add package names here that should always use makepkg
 

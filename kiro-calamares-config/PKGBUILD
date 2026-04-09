@@ -1,17 +1,18 @@
-pkgname=limalinux_calamares_config
-_pkgname=limalinux_calamares_config
+# Maintainer: Erik Dubois <erik.dubois@gmail.com>
+pkgname=kiro-calamares-config
+_pkgname=kiro-calamares-config
 _destname1="/etc"
 _destname2="/usr"
 _destnamescript="/usr/bin"
-pkgver=26.03
-pkgrel=05
-pkgdesc="calamares config for limalinux"
+pkgver=26.01
+pkgrel=04
+pkgdesc="calamares config for kiro"
 arch=('any')
-url="https://github.com/limalinuxos/${_pkgname}"
+url="https://github.com/kirodubes/${_pkgname}"
 license=('GPL3')
 makedepends=('git')
 depends=()
-conflicts=(limalinux_calamares_config_next)
+conflicts=(kiro-calamares-config-next)
 provides=("${pkgname}")
 options=(!strip !emptydirs)
 source=(${_pkgname}::"git+$url")
@@ -23,5 +24,5 @@ package() {
 	mkdir -p "${pkgdir}${_destname2}"
 	cp -r "${srcdir}/${_pkgname}/${_destname2}"* "${pkgdir}"
 	mkdir -p "${pkgdir}${_destnamescript}"
-	cp -r "${srcdir}/${_pkgname}/etc/calamares/pkgbuild/build_calamares" "${pkgdir}${_destnamescript}"
+	cp -r "${srcdir}/${_pkgname}/etc/calamares/pkgbuild/build-calamares" "${pkgdir}${_destnamescript}"
 }

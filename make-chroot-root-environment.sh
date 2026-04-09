@@ -3,7 +3,9 @@
 set -euo pipefail
 
 ##################################################################################################################
-
+# Author    : Erik Dubois
+# Websites  : https://www.erikdubois.be | https://www.arcolinux.info | https://www.arcolinux.com
+#            https://www.arcolinuxd.com | https://www.arcolinuxforum.com
 ##################################################################################################################
 #
 #   DO NOT JUST RUN THIS SCRIPT. EXAMINE AND JUDGE. RUN AT YOUR OWN RISK.
