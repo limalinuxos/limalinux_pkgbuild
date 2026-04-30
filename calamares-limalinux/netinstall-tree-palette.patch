@@ -1,0 +1,211 @@
+From: LimaLinux
+Subject: netinstall: groupstreeview branch overlay + 1-click (clip-safe x)
+---
+diff --git a/src/modules/netinstall/groupstreeview.cpp b/src/modules/netinstall/groupstreeview.cpp
+index f8b98eb..b4150e4 100644
+--- a/src/modules/netinstall/groupstreeview.cpp
++++ b/src/modules/netinstall/groupstreeview.cpp
+@@ -10,13 +10,129 @@
+ 
+ #include "utils/Logger.h"
+ 
++#include <QColor>
++#include <QMouseEvent>
+ #include <QPainter>
++#include <QPalette>
++#include <QPolygon>
++#include <QStyleOptionViewItem>
++#include <QtGlobal>
++
++// QTreeViewPrivate::indentationForItem(): (viewItemLevel + (rootIsDecorated ? 1 : 0)) * indent
++static int
++totalBranchBlockWidth( const QTreeView* v, const QModelIndex& col0index )
++{
++    if ( !col0index.isValid() )
++    {
++        return 0;
++    }
++    int level = 0;
++    for ( QModelIndex t = col0index; t.isValid() && t.parent().isValid(); t = t.parent() )
++    {
++        ++level;
++    }
++    if ( v->rootIsDecorated() )
++    {
++        ++level;
++    }
++    return level * v->indentation();
++}
++
++// Center of the innermost [indent] strip. Must stay inside the branch `rect` passed
++// to drawBranches — the painter is clipped to that rect, so *not* rect.right()+1.
++static int
++expanderCenterX( const QTreeView* v, const QRect& branchBlockRect )
++{
++    const int ind = qMax( 1, v->indentation() );
++    if ( v->isRightToLeft() )
++    {
++        return branchBlockRect.left() + ind / 2;
++    }
++    return branchBlockRect.right() - ind / 2;
++}
++
++static int
++expanderCenterX( const QTreeView* v, const QModelIndex& col0index )
++{
++    if ( !col0index.isValid() )
++    {
++        return 0;
++    }
++    const int i = qMax( 0, totalBranchBlockWidth( v, col0index ) );
++    const int col0 = v->columnViewportPosition( 0 );
++    const int w = v->columnWidth( 0 );
++    if ( w <= 0 || i <= 0 )
++    {
++        return 0;
++    }
++    if ( v->isRightToLeft() )
++    {
++        const int left = col0 + w - i;
++        const QRect b( left, 0, i, 0 );
++        return expanderCenterX( v, b );
++    }
++    return expanderCenterX( v, QRect( col0, 0, i, 0 ) );
++}
++
++static QRect
++expanderClickRect( const QTreeView* v, const QModelIndex& col0index )
++{
++    const int cx = expanderCenterX( v, col0index );
++    if ( cx == 0 )
++    {
++        return {};
++    }
++    const QRect vr = v->visualRect( col0index );
++    return { cx - 12, vr.top(), 24, qMax( 1, vr.height() ) };
++}
++
++GroupsTreeView::GroupsTreeView( QWidget* parent )
++    : QTreeView( parent )
++{
++    const QColor fg( 233, 239, 247 );
++    QPalette p = palette();
++    p.setColor( QPalette::Active, QPalette::Text, fg );
++    p.setColor( QPalette::Active, QPalette::WindowText, fg );
++    p.setColor( QPalette::Active, QPalette::ButtonText, fg );
++    p.setColor( QPalette::Inactive, QPalette::Text, fg );
++    p.setColor( QPalette::Inactive, QPalette::WindowText, fg );
++    p.setColor( QPalette::Inactive, QPalette::ButtonText, fg );
++    p.setColor( QPalette::Disabled, QPalette::Text, fg );
++    p.setColor( QPalette::Disabled, QPalette::WindowText, fg );
++    p.setColor( QPalette::Disabled, QPalette::ButtonText, fg );
++    setPalette( p );
++}
+ 
+ void
+ GroupsTreeView::drawBranches( QPainter* painter, const QRect& rect, const QModelIndex& index ) const
+ {
+     QTreeView::drawBranches( painter, rect, index );
+ 
++    if ( model() && model()->hasChildren( index ) && !rect.isEmpty() )
++    {
++        const QModelIndex idx0 = index.column() == 0 ? index : index.sibling( index.row(), 0 );
++        const int x = expanderCenterX( this, rect );
++        const int y = rect.center().y();
++        const QColor fg( 233, 239, 247 );
++
++        painter->save();
++        painter->setRenderHint( QPainter::Antialiasing, true );
++        painter->setPen( Qt::NoPen );
++        painter->setBrush( fg );
++
++        QPolygon poly;
++        if ( isExpanded( idx0 ) )
++        {
++            poly << QPoint( x - 4, y - 2 ) << QPoint( x + 4, y - 2 ) << QPoint( x, y + 4 );
++        }
++        else
++        {
++            poly << QPoint( x - 2, y - 4 ) << QPoint( x - 2, y + 4 ) << QPoint( x + 4, y );
++        }
++        painter->drawPolygon( poly );
++        painter->restore();
++    }
++
+     // Empty names are handled specially: don't draw them as items,
+     // so the "branch" seems to just pass them by.
+     const QString s = index.data().toString();
+@@ -28,9 +144,51 @@ GroupsTreeView::drawBranches( QPainter* painter, const QRect& rect, const QModel
+         QStyleOptionViewItem opt;
+         initViewItemOption( &opt );
+ #endif
++        {
++            const QColor fg( 233, 239, 247 );
++            opt.palette.setColor( QPalette::Text, fg );
++            opt.palette.setColor( QPalette::WindowText, fg );
++            opt.palette.setColor( QPalette::ButtonText, fg );
++        }
+         opt.state = QStyle::State_Sibling;
+         opt.rect = QRect( !isRightToLeft() ? rect.left() : rect.right() + 1, rect.top(), indentation(), rect.height() );
+         painter->eraseRect( opt.rect );
+         style()->drawPrimitive( QStyle::PE_IndicatorBranch, &opt, painter, this );
+     }
+ }
++
++void
++GroupsTreeView::mousePressEvent( QMouseEvent* event )
++{
++    if ( event->button() == Qt::LeftButton )
++    {
++        QModelIndex idx = indexAt( event->pos() );
++        if ( !idx.isValid() && model() )
++        {
++            const int y = event->pos().y();
++            for ( int x = 0; x < width(); x += 8 )
++            {
++                idx = indexAt( QPoint( x, y ) );
++                if ( idx.isValid() )
++                {
++                    break;
++                }
++            }
++        }
++        if ( idx.isValid() && model() )
++        {
++            const QModelIndex idx0 = idx.sibling( idx.row(), 0 );
++            if ( model()->hasChildren( idx0 ) )
++            {
++                const QRect hit = expanderClickRect( this, idx0 );
++                if ( !hit.isEmpty() && hit.contains( event->pos() ) )
++                {
++                    setExpanded( idx0, !isExpanded( idx0 ) );
++                    event->accept();
++                    return;
++                }
++            }
++        }
++    }
++    QTreeView::mousePressEvent( event );
++}
+diff --git a/src/modules/netinstall/groupstreeview.h b/src/modules/netinstall/groupstreeview.h
+index 82f8bc0..9cc4d75 100644
+--- a/src/modules/netinstall/groupstreeview.h
++++ b/src/modules/netinstall/groupstreeview.h
+@@ -8,11 +8,15 @@
+  */
+ #include <QTreeView>
+ 
++class QWidget;
++class QMouseEvent;
++
+ class GroupsTreeView : public QTreeView
+ {
+ public:
+-    using QTreeView::QTreeView;
++    explicit GroupsTreeView( QWidget* parent = nullptr );
+ 
+ protected:
+-    virtual void drawBranches( QPainter* painter, const QRect& rect, const QModelIndex& index ) const override;
++    void drawBranches( QPainter* painter, const QRect& rect, const QModelIndex& index ) const override;
++    void mousePressEvent( QMouseEvent* event ) override;
+ };
