@@ -1,0 +1,99 @@
+From: LimaLinux
+Subject: netinstall: fit Name column without tree misalignment
+---
+--- a/src/modules/netinstall/NetInstallPage.cpp
++++ b/src/modules/netinstall/NetInstallPage.cpp
+@@ -24,7 +24,60 @@
+ #include "utils/Yaml.h"
+ 
+ #include <QHeaderView>
++#include <QAbstractItemModel>
++#include <QFontMetrics>
+ #include <QNetworkReply>
++
++namespace
++{
++int
++measureNameColumnContent( const QTreeView* tree, const QAbstractItemModel* model, const QModelIndex& parent, int depth )
++{
++    int maxWidth = 0;
++    const int rows = model->rowCount( parent );
++    const QFontMetrics fm( tree->font() );
++
++    for ( int row = 0; row < rows; ++row )
++    {
++        const QModelIndex idx = model->index( row, 0, parent );
++        const QString text = model->data( idx, Qt::DisplayRole ).toString();
++        const int textWidth = fm.horizontalAdvance( text );
++        const int treeIndent = tree->indentation() * ( depth + ( tree->rootIsDecorated() ? 1 : 0 ) );
++        const int rowWidth = textWidth + treeIndent + 40;  // branch + checkbox + paddings
++        if ( rowWidth > maxWidth )
++        {
++            maxWidth = rowWidth;
++        }
++        maxWidth = qMax( maxWidth, measureNameColumnContent( tree, model, idx, depth + 1 ) );
++    }
++    return maxWidth;
++}
++
++void
++updateNameColumnWidth( QTreeView* tree )
++{
++    if ( !tree || !tree->model() )
++    {
++        return;
++    }
++
++    const int measured = measureNameColumnContent( tree, tree->model(), QModelIndex(), 0 );
++    const int viewportWidth = qMax( 0, tree->viewport()->width() );
++    const int minNameWidth = 220;
++    const int maxNameWidth = qMax( 320, ( viewportWidth * 55 ) / 100 );
++
++    int target = measured + 16;
++    if ( target < minNameWidth )
++    {
++        target = minNameWidth;
++    }
++    if ( target > maxNameWidth )
++    {
++        target = maxNameWidth;
++    }
++    tree->setColumnWidth( 0, target );
++}
++}  // namespace
+ 
+ NetInstallPage::NetInstallPage( Config* c, QWidget* parent )
+     : QWidget( parent )
+@@ -32,7 +85,17 @@
+     , ui( new Ui::Page_NetInst )
+ {
+     ui->setupUi( this );
+-    ui->groupswidget->header()->setSectionResizeMode( QHeaderView::ResizeToContents );
++    QHeaderView* header = ui->groupswidget->header();
++    header->setStretchLastSection( false );
++    header->setSectionResizeMode( 0, QHeaderView::Interactive );
++    header->setSectionResizeMode( 1, QHeaderView::Stretch );
++
++    connect( ui->groupswidget, &QTreeView::expanded, this, [ this ]( const QModelIndex& ) {
++        updateNameColumnWidth( ui->groupswidget );
++    } );
++    connect( ui->groupswidget, &QTreeView::collapsed, this, [ this ]( const QModelIndex& ) {
++        updateNameColumnWidth( ui->groupswidget );
++    } );
+     ui->groupswidget->setModel( c->model() );
+     connect( c, &Config::statusChanged, ui->netinst_status, &QLabel::setText );
+     connect( c,
+@@ -60,6 +123,7 @@
+             ui->groupswidget->setExpanded( index, true );
+         }
+     }
++    updateNameColumnWidth( ui->groupswidget );
+ }
+ 
+ void
+@@ -92,4 +156,5 @@
+     {
+         m_config->model()->appendModelData( groups );
+     }
++    updateNameColumnWidth( ui->groupswidget );
+ }

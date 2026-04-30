@@ -1,0 +1,74 @@
+pkgname=calamares-limalinux
+_pkgname=calamares
+pkgver=3.4.2.r4.g841b478
+# Keep pkgrel deterministic; bump manually when needed.
+pkgrel=1
+pkgdesc='Calamares installer for LimaLinux (Binary only)'
+arch=('x86_64')
+url="https://codeberg.org/limalinuxos/calamares"
+license=('LGPL')
+provides=('calamares')
+conflicts=('calamares' 'calamares-git')
+
+depends=('boost-libs' 'ckbcomp' 'cryptsetup' 'doxygen' 'efibootmgr' 'gptfdisk' 
+         'gtk-update-icon-cache' 'icu' 'kconfig' 'kcoreaddons' 'kcrash' 
+         'ki18n' 'kparts' 'kpmcore' 'kservice' 'kwidgetsaddons' 
+         'libpwquality' 'polkit-qt6' 'rsync' 'qt6-declarative' 'solid' 
+         'squashfs-tools' 'yaml-cpp' 'dracut')
+
+makedepends=('boost' 'cmake' 'extra-cmake-modules' 'git' 'fakeroot' 'ninja' 
+             'python-jsonschema' 'python-pyaml' 'python-unidecode' 'qt6-tools')
+
+source=("git+$url.git"
+        "cal_limalinux.desktop"
+        "calamares_wrapper"
+        "calamares_polkit"
+        "netinstall-tree-palette.patch"
+        "lang-es-goback.patch"
+        "netinstall-name-column-fit.patch")
+sha256sums=('SKIP'
+            '3cd958c44b5e967674e3f8749846fbcf2edcfbd2523a3d1749ded6d033aaea31'
+            '34bbca1685ee69936a54181eb10ab6be2647674f00e1252c31242c2c84685a99'
+            '86fbfd30d863ca98dc6b85d9567adb288a90210bec43274f67706b9d0d3a81de'
+            '7a81eb05727c0504b5908c6668326541b049f71562d432c416b5a1faca6d6fd8'
+            'e78520390eab02a00eecd7d89f906bb48eeb96cc1bb172a95b84b54a38519cb5'
+            'eb496ff12548df57885f1d200bd44962418210ca4869158a4c50b924ead72448')
+
+pkgver() {
+    cd "$srcdir/$_pkgname"
+    git describe --long --tags --abbrev=7 | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g'
+}
+
+prepare() {
+    cd "$srcdir/$_pkgname"
+    patch -p1 -i "$srcdir/netinstall-tree-palette.patch"
+    patch -p1 -i "$srcdir/lang-es-goback.patch"
+    patch -p1 -i "$srcdir/netinstall-name-column-fit.patch"
+}
+
+build() {
+    cd "$srcdir/$_pkgname"
+    cmake -S . -B build -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_LIBDIR=lib \
+        -DWITH_QT6=ON \
+        -DSKIP_MODULES="dracutlukscfg;dummycpp;dummyprocess;dummypython;dummypythonqt;initramfs;initramfscfg;interactiveterminal;keyboardq;license;localeq;oemid;packagechooserq;partitionq;services-openrc;summaryq;tracking;usersq;welcomeq"
+    cmake --build build
+}
+
+package() {
+    cd "$srcdir/$_pkgname/build"
+    DESTDIR="$pkgdir" cmake --install .
+
+    # Remove default config folder to avoid conflicts with your custom package 
+    rm -rf "$pkgdir/etc/calamares"
+
+    # Install Desktop entry and custom wrappers
+    install -Dm644 "$srcdir/cal_limalinux.desktop" "$pkgdir/usr/share/applications/cal_limalinux.desktop"
+    install -Dm755 "$srcdir/calamares_wrapper" "$pkgdir/usr/bin/calamares_wrapper"
+    install -Dm755 "$srcdir/calamares_polkit" "$pkgdir/usr/bin/calamares_polkit"
+
+    # Cleanup default desktop file
+    rm -f "$pkgdir/usr/share/applications/calamares.desktop"
+}
